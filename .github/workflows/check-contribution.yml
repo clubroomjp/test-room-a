@@ -5,7 +5,7 @@
 # - report は訪問者のコードを動かさず、emit.ts が検めた値だけを使う。
 # - ${{ }} は run: の中に書かない。値は env: で渡し、シェルでは引用する。
 # - イシューの題名と本文は、どこにも展開しない（check が $GITHUB_EVENT_PATH から読む）。
-# - uses: の版は、コミットの SHA で固定する（依頼者が __..._SHA__ を埋める）。
+# - uses: の版は、コミットの SHA で固定する（版の名前は行末に書く）。
 #
 # 用意が要るもの: リポジトリに check:ok と check:ng のラベルを作っておく。
 
@@ -84,4 +84,5 @@ jobs:
             gh issue edit "$NUMBER" --add-label "check:ng"
           fi
           node tools/check/src/report-text.ts "$CODE" "$NAME" "$SHA256" > "$RUNNER_TEMP/comment.md"
-          gh issue comment "$NUMBER" --body-file "$RUNNER_TEMP/comment.md"
+          # コメントは毎回足さず、前回の自分のコメントを書き換える（印が増えないようにする）。
+          gh issue comment "$NUMBER" --edit-last --create-if-none --body-file "$RUNNER_TEMP/comment.md"

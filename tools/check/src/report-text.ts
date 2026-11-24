@@ -5,6 +5,9 @@
  *
  * 文面に入れてよい可変の値は、正規表現を通った名前と、sha256 の先頭 12 文字だけ。
  * 通らない値は使わず、その部分を省いた文面にする。
+ *
+ * 最後の行には、ホストの道具（adopt-tool）が読む印を足す。
+ * 印に入れる値も、正規表現を通ったものだけ。通らなければ `-` にする。
  */
 import { isName, isOutcome, isSha256, type Outcome } from "./outcome.ts";
 
@@ -67,15 +70,20 @@ const LABELS: Readonly<Record<Outcome, { readonly ja: string; readonly en: strin
   },
 };
 
+/** 機械が読む印。値は正規表現を通ったものだけを入れ、通らなければ `-` にする。 */
+const markerLine = (code: Outcome, name: string | undefined, sha256: string | undefined): string =>
+  `<!-- jamroom-check v1 code=${code} sha256=${sha256 ?? "-"} name=${name ?? "-"} -->`;
+
 /** 符号から文面を作る。正規表現を通らない値は使わない。 */
 export const reportText = (rawCode: string | undefined, rawName: string | undefined, rawSha: string | undefined): string => {
   const code: Outcome = isOutcome(rawCode) ? rawCode : "internal";
   const name = isName(rawName) ? rawName : undefined;
-  const shortSha = isSha256(rawSha) ? rawSha.slice(0, 12) : undefined;
+  const sha256 = isSha256(rawSha) ? rawSha : undefined;
+  const shortSha = sha256 === undefined ? undefined : sha256.slice(0, 12);
   const label = LABELS[code];
   const jaDetail = name === undefined ? "" : `（名前: ${name}${shortSha === undefined ? "" : `、コード: ${shortSha}`}）`;
   const enDetail = name === undefined ? "" : ` (name: ${name}${shortSha === undefined ? "" : `, code: ${shortSha}`})`;
-  return `${label.ja}${jaDetail}\n${label.en}${enDetail}\n`;
+  return `${label.ja}${jaDetail}\n${label.en}${enDetail}\n${markerLine(code, name, sha256)}\n`;
 };
 
 const main = (): void => {
