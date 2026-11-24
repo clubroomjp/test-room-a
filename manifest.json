@@ -31,18 +31,6 @@
       "path": "modules/d.js",
       "sha256": "e8f07785e920438e11492415535a81a069c87700ad28077274f4193a8bc6d6ff",
       "bytes": 27
-    },
-    {
-      "name": "glow",
-      "path": "modules/glow.js",
-      "sha256": "0a8e012727fe8e4853a5c73ef5d5dcf98de8e634b1c49a5b703808ca426a529d",
-      "bytes": 435,
-      "issue": 35,
-      "author": {
-        "login": "clubroomjp",
-        "id": 124767248
-      },
-      "adoptedAt": "2026-11-24T06:40:10.132Z"
     }
   ],
   "lib": [
