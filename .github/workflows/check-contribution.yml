@@ -1,0 +1,87 @@
+# 部屋のリポジトリに置くワークフロー。
+#
+# 決まりごと:
+# - 訪問者のコードを動かすのは check だけ。check は権限も秘密も持たない。
+# - report は訪問者のコードを動かさず、emit.ts が検めた値だけを使う。
+# - ${{ }} は run: の中に書かない。値は env: で渡し、シェルでは引用する。
+# - イシューの題名と本文は、どこにも展開しない（check が $GITHUB_EVENT_PATH から読む）。
+# - uses: の版は、コミットの SHA で固定する（依頼者が __..._SHA__ を埋める）。
+#
+# 用意が要るもの: リポジトリに check:ok と check:ng のラベルを作っておく。
+
+name: check-contribution
+on:
+  issues:
+    types: [opened, edited]
+permissions: {}
+concurrency:
+  group: check-contribution-${{ github.event.issue.number }}
+  cancel-in-progress: true
+jobs:
+  check:
+    # 訪問者のコードを動かす。権限なし。秘密なし。
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    permissions: {}
+    outputs:
+      code: ${{ steps.emit.outputs.code }}
+      number: ${{ steps.emit.outputs.number }}
+      name: ${{ steps.emit.outputs.name }}
+      sha256: ${{ steps.emit.outputs.sha256 }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: "1.3.9"
+      - name: 依存を入れる
+        working-directory: tools/check
+        run: |
+          bun install --frozen-lockfile
+      - name: 検査する
+        run: |
+          node tools/check/src/main.ts "$GITHUB_EVENT_PATH" "$GITHUB_WORKSPACE" "$RUNNER_TEMP/result.json"
+      - name: 出力をまとめる
+        id: emit
+        run: |
+          node tools/check/src/emit.ts "$RUNNER_TEMP/result.json" >> "$GITHUB_OUTPUT"
+  report:
+    # 結果を書き込むだけ。訪問者のコードは動かさない。チェックアウトは既定ブランチ。
+    needs: check
+    if: ${{ always() && needs.check.outputs.code != 'skip' && needs.check.outputs.code != '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions:
+      issues: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
+      - name: ラベルとコメントを更新する
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NUMBER: ${{ needs.check.outputs.number }}
+          CODE: ${{ needs.check.outputs.code }}
+          NAME: ${{ needs.check.outputs.name }}
+          SHA256: ${{ needs.check.outputs.sha256 }}
+        run: |
+          if ! printf '%s' "$NUMBER" | grep -Eq '^[0-9]+$'; then
+            echo "イシュー番号が不正です" >&2
+            exit 1
+          fi
+          gh issue edit "$NUMBER" --remove-label "check:ok" || true
+          gh issue edit "$NUMBER" --remove-label "check:ng" || true
+          if [ "$CODE" = "ok" ]; then
+            gh issue edit "$NUMBER" --add-label "check:ok"
+          else
+            gh issue edit "$NUMBER" --add-label "check:ng"
+          fi
+          node tools/check/src/report-text.ts "$CODE" "$NAME" "$SHA256" > "$RUNNER_TEMP/comment.md"
+          gh issue comment "$NUMBER" --body-file "$RUNNER_TEMP/comment.md"

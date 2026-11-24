@@ -1,0 +1,9 @@
+{
+  "name": "jamroom-check",
+  "private": true,
+  "type": "module",
+  "description": "部屋のリポジトリに置く、貢献の検査役。QuickJS の外へは何も出さない。",
+  "dependencies": {
+    "quickjs-emscripten": "0.32.0"
+  }
+}
