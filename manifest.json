@@ -1,0 +1,44 @@
+{
+  "format": 1,
+  "entry": "entry",
+  "modules": [
+    {
+      "name": "entry",
+      "path": "modules/entry.js",
+      "sha256": "2ce111f71a093e41037dff52643da7be166d77739869303b7937e9a3f68e072c",
+      "bytes": 220
+    },
+    {
+      "name": "a",
+      "path": "modules/a.js",
+      "sha256": "6b0f6a09771a1e2b57b3cab700f5d54559e299c3a125b4b99f1e2647d364be9a",
+      "bytes": 69
+    },
+    {
+      "name": "b",
+      "path": "modules/b.js",
+      "sha256": "8f9c330dab8fedaffc49565878dd927e5e3cfd5428741f5d4bbb1b9fe3d1cae9",
+      "bytes": 26
+    },
+    {
+      "name": "c",
+      "path": "modules/c.js",
+      "sha256": "0c5dc25e91a87f3cd310be8a7a255e3278ac202fa73339db4b4aecb4120b4228",
+      "bytes": 24
+    },
+    {
+      "name": "d",
+      "path": "modules/d.js",
+      "sha256": "e8f07785e920438e11492415535a81a069c87700ad28077274f4193a8bc6d6ff",
+      "bytes": 27
+    }
+  ],
+  "lib": [
+    {
+      "name": "three",
+      "path": "lib/three.esm.js",
+      "sha256": "c0325e902639331a8c1c140b1c0b800c81ed44aea4aeaffb1af0b8d0262c13a2",
+      "bytes": 1319808
+    }
+  ]
+}
